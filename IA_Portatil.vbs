@@ -39,16 +39,34 @@ If Not ServidorNoAr() Then
     ' Otimizacao A (v1.3): prompt caching
     '   --cache-reuse 256        reusa prefixo do prompt entre turnos via KV shift
     '   --slot-save-path "cache" persiste o slot em disco -> sobrevive ao sleep-idle
-    Dim srvExe, cacheDir
+    Dim srvExe, cacheDir, engineOk, msgErros
     srvExe   = base & "\llama\llama-server.exe"
     cacheDir = base & "\cache"
+    engineOk = False
+    msgErros = ""
+
+    ' 1) tenta o llama-server.exe primeiro (.exe comum, passa no AppLocker na
+    '    maioria das maquinas corporativas; sem UI em ingles).
     If fso.FileExists(srvExe) Then
         cmd = """" & srvExe & """ -m """ & modelo & """" & _
               " --host 127.0.0.1 --port 8080 -c 2048 -t 3 -fa on" & _
               " -ctk q8_0 -ctv q8_0 -ub 256 -b 512 --no-webui" & _
               " --cache-reuse 256 --slot-save-path """ & cacheDir & """"
         sh.CurrentDirectory = base & "\llama"
-    Else
+        On Error Resume Next
+        sh.Run cmd, 0, False
+        If Err.Number = 0 Then
+            engineOk = True
+        Else
+            msgErros = msgErros & "- llama-server.exe: " & Err.Description & vbCrLf
+        End If
+        On Error GoTo 0
+    End If
+
+    ' 2) se o llama-server.exe nao existir OU tiver sido bloqueado, cai para o
+    '    llamafile.exe (formato APE) — em algumas maquinas e o INVERSO que passa
+    '    no AppLocker/antivirus, entao os dois lados precisam ser tentados.
+    If Not engineOk And fso.FileExists(exe) Then
         ' --sleep-idle-seconds 180: apos 3 min ocioso o servidor "dorme" e libera a RAM.
         cmd = """" & exe & """ --server -m """ & modelo & """" & _
               " --host 127.0.0.1 --port 8080 -c 2048 -t 3 -fa on" & _
@@ -56,20 +74,21 @@ If Not ServidorNoAr() Then
               " --sleep-idle-seconds 180" & _
               " --cache-reuse 256 --slot-save-path """ & cacheDir & """"
         sh.CurrentDirectory = base
+        On Error Resume Next
+        sh.Run cmd, 0, False
+        If Err.Number = 0 Then
+            engineOk = True
+        Else
+            msgErros = msgErros & "- llamafile.exe: " & Err.Description & vbCrLf
+        End If
+        On Error GoTo 0
     End If
-    ' 0 = janela oculta (sem console preto); False = nao espera.
-    ' Em Windows corporativo, o AppLocker/antivirus pode BLOQUEAR o llamafile.exe
-    ' (formato APE) -> "Permissao negada". Tratamos o erro em vez de travar.
-    Dim errExec
-    On Error Resume Next
-    sh.Run cmd, 0, False
-    errExec = Err.Number
-    On Error GoTo 0
 
-    If errExec <> 0 Then
+    If Not engineOk Then
         MsgBox "Nao consegui iniciar o motor de IA neste Windows." & vbCrLf & vbCrLf & _
-               "A politica de seguranca (AppLocker/antivirus) bloqueou o llamafile.exe." & vbCrLf & _
-               "Inicie o servidor pelo WSL (Ubuntu):   ./iniciar.sh" & vbCrLf & vbCrLf & _
+               "A politica de seguranca (AppLocker/antivirus) bloqueou os executaveis:" & vbCrLf & _
+               msgErros & vbCrLf & _
+               "Alternativa: inicie o servidor pelo WSL (Ubuntu):   ./iniciar.sh" & vbCrLf & vbCrLf & _
                "O chat vai abrir assim mesmo; quando o servidor estiver no ar, atualize a pagina.", _
                vbExclamation, "Arandu - motor bloqueado pelo Windows"
     Else
