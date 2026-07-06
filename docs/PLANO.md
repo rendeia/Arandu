@@ -217,7 +217,7 @@ entra quando é solicitado e sai depois, liberando espaço.
        automática de memória nos 5 idiomas, voz do SO pelo BCP-47 do idioma escolhido
 9. [x] MARCO: **família Katu** (G2 — Raciocínio) migrada para repo próprio
        [`rendeia/Katu`](https://github.com/rendeia/Katu). Padrão "um repo por
-       família": plataforma Rendeia (`rendeia/arandu_nano`) hospeda só a família
+       família": plataforma Rendeia (`rendeia/Arandu`) hospeda só a família
        Arandu (G1); cada outra família tem seu repo (Katu, e futuras Vera/Taba).
        Integração à plataforma: ~5 min seguindo o `integrar-rendeia.md` do repo
        da família (baixar `.gguf`, copiar `.bat`, adicionar entrada no

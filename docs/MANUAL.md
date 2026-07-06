@@ -80,7 +80,7 @@ português do Brasil; também responde em inglês, espanhol, francês e alemão.
 
 ### 2.1 Caminho fácil: pacote pronto (Windows)
 
-1. Baixe o `.zip` em [Releases](https://github.com/rendeia/arandu_nano/releases/latest).
+1. Baixe o `.zip` em [Releases](https://github.com/rendeia/Arandu/releases/latest).
 2. **Extraia** numa pasta qualquer (Área de Trabalho, pendrive…).
 3. Abra a pasta — você verá `IA_Portatil.vbs` e `Iniciar_Arandu.vbs`.
 
@@ -89,8 +89,8 @@ Não há instalador. Para remover, é só apagar a pasta.
 ### 2.2 A partir do código (qualquer SO)
 
 ```sh
-git clone https://github.com/rendeia/arandu_nano.git
-cd arandu_nano
+git clone https://github.com/rendeia/Arandu.git
+cd Arandu
 ```
 
 Depois você precisa baixar à parte (não vão no Git por causa do tamanho):
@@ -733,7 +733,7 @@ Brazilian Portuguese; also speaks English, Spanish, French, and German.
 
 ### 2.1 Easy path: ready-made package (Windows)
 
-1. Download the `.zip` from [Releases](https://github.com/rendeia/arandu_nano/releases/latest).
+1. Download the `.zip` from [Releases](https://github.com/rendeia/Arandu/releases/latest).
 2. **Extract** to any folder (Desktop, USB stick…).
 3. Open the folder — you'll see `IA_Portatil.vbs` and `Iniciar_Arandu.vbs`.
 
@@ -742,8 +742,8 @@ No installer. To uninstall, just delete the folder.
 ### 2.2 From source (any OS)
 
 ```sh
-git clone https://github.com/rendeia/arandu_nano.git
-cd arandu_nano
+git clone https://github.com/rendeia/Arandu.git
+cd Arandu
 ```
 
 Then download separately (not in Git due to size):

@@ -7,7 +7,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/licença-Apache--2.0-blue" alt="Licença Apache-2.0">
-  <img src="https://img.shields.io/github/v/release/rendeia/arandu_nano?include_prereleases&label=download" alt="Release">
+  <img src="https://img.shields.io/github/v/release/rendeia/Arandu?include_prereleases&label=download" alt="Release">
   <img src="https://img.shields.io/badge/plataforma-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey" alt="Plataformas">
   <img src="https://img.shields.io/badge/CPU-only-success" alt="CPU-only">
   <img src="https://img.shields.io/badge/RAM-~1.2%20GB-success" alt="RAM">
@@ -41,7 +41,7 @@
 
 Baixe o pacote pronto, extraia e clique em `IA_Portatil.vbs`:
 
-👉 **[Download — Rendeia · Arandu Mirim 1.1](https://github.com/rendeia/arandu_nano/releases/latest)**
+👉 **[Download — Rendeia · Arandu Mirim 1.1](https://github.com/rendeia/Arandu/releases/latest)**
 
 Passo a passo (e o aviso do SmartScreen) no `GUIA_DO_TESTADOR.md` dentro do pacote.
 
@@ -199,7 +199,7 @@ Taba (G4 agentes). Detalhes em [`docs/NOMENCLATURA_MODELOS.md`](docs/NOMENCLATUR
 
 ## Para testar (pacote pronto)
 Quem só quer **experimentar** não precisa montar nada: use o `.zip` da página de
-[Releases](https://github.com/rendeia/arandu_nano/releases) — baixe,
+[Releases](https://github.com/rendeia/Arandu/releases) — baixe,
 extraia e clique em `IA_Portatil.vbs`. Passo a passo em `GUIA_DO_TESTADOR.md`.
 
 Para **gerar** esse pacote a partir do projeto (mantenedores):
