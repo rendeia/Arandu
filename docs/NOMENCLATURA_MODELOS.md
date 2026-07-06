@@ -10,14 +10,24 @@ Rendeia                        ← MARCA / plataforma
   │   ├─ Katu    (G2 — Raciocínio)
   │   ├─ Vera    (G3 — Multimodal)
   │   └─ Taba    (G4 — Agentes)
-  └─ Tier por tamanho         ← consistente entre famílias
-      ├─ Mirim   (pequeno / rápido)        — em tupi-guarani: "pequeno"
-      ├─ Eté     (médio / equilíbrio)      — em tupi-guarani: "verdadeiro"
-      └─ Guaçu   (grande / qualidade)      — em tupi-guarani: "grande"
+  ├─ Tier por tamanho         ← tamanho do MODELO (consistente entre famílias)
+  │   ├─ Mirim   (pequeno / rápido)        — em tupi-guarani: "pequeno"
+  │   ├─ Eté     (médio / equilíbrio)      — em tupi-guarani: "verdadeiro"
+  │   └─ Guaçu   (grande / qualidade)      — em tupi-guarani: "grande"
+  └─ Edição por entrega       ← COMO o produto é entregue (eixo independente)
+      ├─ Nano     (portátil — roda de USB, sem instalar)
+      └─ Desktop  (instalada — fixa no PC, com instalador e autostart)
 ```
 
-**Nome completo** (formal): `Rendeia Arandu Mirim 1.1`
+**Nome do modelo** (formal): `Rendeia Arandu Mirim 1.1`
 **Nome curto** (uso comum): `Arandu Mirim 1.1`
+**Com edição**: `Arandu Nano` (portátil) ou `Arandu Desktop` (instalada),
+rodando o modelo `Arandu Mirim 1.1`.
+
+> **Tier ≠ Edição.** *Mirim/Eté/Guaçu* dizem o TAMANHO do modelo.
+> *Nano/Desktop* dizem a FORMA DE ENTREGA (portátil vs. instalada). São eixos
+> independentes: a edição Desktop e a edição Nano rodam o mesmo modelo
+> (Arandu Mirim 1.1) — muda só a "embalagem".
 
 > Inspiração: a marca **Rendeia** une *renda* (tradição artesã brasileira, trama,
 > tecido) e *ideia* (intelecto, IA). O nome remete também ao bordado **ñanduti**
@@ -85,12 +95,18 @@ O nome técnico do modelo NÃO aparece na interface — só o nome do projeto.
 
 ---
 
-## Sobre o nome anterior "Nano"
+## Sobre o nome "Nano" (história e uso atual)
 
-Antes da reestruturação, o tier menor da família Arandu se chamava **Nano**
-(termo da indústria de IA). A partir da v1.3, foi renomeado para **Mirim** —
-mantendo coerência cultural com o resto da nomenclatura tupi-guarani (Arandu,
-Katu, Eté, Guaçu) e com a marca Rendeia.
+O termo **Nano** já teve dois papéis, e é fácil confundir:
+
+1. **Antes:** era o nome do *tier menor* (tamanho) da família Arandu. Esse papel
+   foi para o **Mirim** (tupi-guarani "pequeno"), alinhando com Eté/Guaçu.
+2. **Agora:** **Nano** é o nome da **edição portátil** (roda de USB, sem
+   instalar) — um eixo diferente do tier. A edição instalada é a **Desktop**.
+
+Ou seja: hoje *Nano* NÃO é tamanho, é forma de entrega. O tamanho do modelo é
+sempre Mirim/Eté/Guaçu. Ex.: a edição *Arandu Nano* roda o modelo *Arandu
+Mirim 1.1*.
 
 Para o usuário final isso é transparente: os arquivos `.bat` continuam com os
 mesmos nomes (`Usar_Nano_1.1.bat`, etc.) por compatibilidade.
