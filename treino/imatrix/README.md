@@ -61,7 +61,7 @@ llama-quantize \
 
 ### 4. Substitua o modelo na raiz do projeto
 
-Copie o `Qwen_Qwen3-1.7B-Q4_K_M.gguf` gerado para a pasta `Arandu-nano/`,
+Copie o `Qwen_Qwen3-1.7B-Q4_K_M.gguf` gerado para a pasta `Arandu/`,
 sobrescrevendo o anterior. O `modelo.txt` e os lançadores já apontam para
 esse nome de arquivo — nada mais precisa mudar.
 

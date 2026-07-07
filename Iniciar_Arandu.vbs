@@ -19,7 +19,7 @@ If fso.FileExists(cfgFile) Then atual = Trim(fso.OpenTextFile(cfgFile, 1).ReadLi
 
 If Not fso.FileExists(base & "\" & modeloArq) Then
   MsgBox "Modelo nao encontrado:" & vbCrLf & modeloArq & vbCrLf & vbCrLf & _
-         "Baixe o .gguf e coloque na pasta Arandu-nano.", vbExclamation, "Arandu"
+         "Baixe o .gguf e coloque na pasta Arandu.", vbExclamation, "Arandu"
   WScript.Quit
 End If
 

@@ -2,7 +2,7 @@
 
 ## Objetivo
 Plataforma de IA de chat chamada **Rendeia**, que roda 100% LOCAL e OFFLINE
-direto do pendrive (D:\Arandu-nano\), em português do Brasil, com o MÍNIMO de RAM
+direto do pendrive (D:\Arandu\), em português do Brasil, com o MÍNIMO de RAM
 sem perder velocidade. FOCO: portabilidade na USB (sem instalar nada no PC) e
 evolução com modelos próprios (fine-tuning).
 
@@ -55,7 +55,7 @@ chat.html), nunca o arquivo técnico.
   velocidade e RAM).
 
 ## Estrutura no pendrive
-D:\Arandu-nano\
+D:\Arandu\
   ├── llamafile.exe                       (runtime, ~320 MB)
   ├── arandu-nano-1.0-Q4_K_M.gguf         (modelo PRÓPRIO ativo, ~0,8 GB)
   ├── Llama-3.2-1B-Instruct-Q4_K_M.gguf   (base, ~0,8 GB)

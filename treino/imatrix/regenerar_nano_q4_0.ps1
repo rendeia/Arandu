@@ -23,7 +23,7 @@
 # =====================================================================
 
 $ErrorActionPreference = 'Stop'
-$ROOT = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)   # Arandu-nano\
+$ROOT = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)   # Arandu\
 $BIN_QUANTIZE = Join-Path $ROOT 'llama\llama-quantize.exe'
 $BASE_GGUF    = Join-Path $ROOT 'Qwen3-1.7B-Q8_0.gguf'
 $SAIDA_GGUF   = Join-Path $ROOT 'Arandu_Nano_1.1_Q4_0.gguf'

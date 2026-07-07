@@ -13,14 +13,14 @@
 #   - llama\llama-imatrix.exe e llama\llama-quantize.exe (ja vem no projeto)
 #   - O modelo base de alta precisao: Qwen3-1.7B-Q8_0.gguf (~1,83 GB).
 #     Baixe em: https://huggingface.co/Qwen/Qwen3-1.7B-GGUF
-#     e coloque na raiz do projeto (mesmo nivel deste arquivo: Arandu-nano\).
+#     e coloque na raiz do projeto (mesmo nivel deste arquivo: Arandu\).
 #
 #  Tempo estimado: 30 min - 2h em CPU (depende do numero de chunks).
 #  Uso: PowerShell -ExecutionPolicy Bypass -File regenerar_nano_1.2.ps1
 # =====================================================================
 
 $ErrorActionPreference = 'Stop'
-$ROOT = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)   # Arandu-nano\
+$ROOT = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)   # Arandu\
 $BIN_IMATRIX  = Join-Path $ROOT 'llama\llama-imatrix.exe'
 $BIN_QUANTIZE = Join-Path $ROOT 'llama\llama-quantize.exe'
 $BASE_GGUF    = Join-Path $ROOT 'Qwen3-1.7B-Q8_0.gguf'           # entrada (alta precisao)
