@@ -42,8 +42,8 @@ _Atualizado em 2026-07-06._
 | ~~Q4_0 + AVX-512 como velocidade padrão~~ | **testado e descartado** (jul/2026) | ❌ empatou com Q4_K_M; sem ganho |
 | **Curto** (semanas) | Release público com os instaladores Desktop | 🟡 instaladores prontos, falta publicar |
 | **Curto** | Assinar os instaladores (code signing) | ⚪ opcional (custo de certificado) |
-| **Médio** (meses) | Ampliar dataset → **Arandu Mirim 1.2** | ⚪ o que mais melhora a qualidade |
-| **Médio** | Memória + **ações assistidas** (criar evento, rascunhar e-mail) | 🟡 leitura pronta, falta agir |
+| **Médio** (meses) | Ampliar dataset → **Arandu Mirim 1.2** (base Qwen3-1.7B) | ⚪ plano em [PLANO_1.2_ACOES.md](PLANO_1.2_ACOES.md) — o que mais melhora a qualidade |
+| **Médio** | Memória + **ações assistidas** (criar evento, rascunhar e-mail) | 🟡 leitura pronta, falta agir — plano em [PLANO_1.2_ACOES.md](PLANO_1.2_ACOES.md) |
 | **Contínuo** | Voz + integração com o PC | 🟢 parcial, evoluindo |
 | **Longo** (depende de hardware) | Arandu **Eté** (~3B) / **Guaçu** (~7B) | 🔴 inviável no hardware atual |
 | **Longo** | Família **Vera** (multimodal) / **Taba** (agentes) | 🔴 conceito |
