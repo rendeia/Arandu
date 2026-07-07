@@ -39,8 +39,8 @@ _Atualizado em 2026-07-06._
 
 | Horizonte | Evolução | Status |
 |---|---|---|
-| **Curto** (semanas) | Q4_0 + AVX-512 como velocidade padrão | 🟡 pronto no projeto, falta aplicar |
-| **Curto** | Release público com os instaladores Desktop | 🟡 instaladores prontos, falta publicar |
+| ~~Q4_0 + AVX-512 como velocidade padrão~~ | **testado e descartado** (jul/2026) | ❌ empatou com Q4_K_M; sem ganho |
+| **Curto** (semanas) | Release público com os instaladores Desktop | 🟡 instaladores prontos, falta publicar |
 | **Curto** | Assinar os instaladores (code signing) | ⚪ opcional (custo de certificado) |
 | **Médio** (meses) | Ampliar dataset → **Arandu Mirim 1.2** | ⚪ o que mais melhora a qualidade |
 | **Médio** | Memória + **ações assistidas** (criar evento, rascunhar e-mail) | 🟡 leitura pronta, falta agir |
@@ -48,7 +48,7 @@ _Atualizado em 2026-07-06._
 | **Longo** (depende de hardware) | Arandu **Eté** (~3B) / **Guaçu** (~7B) | 🔴 inviável no hardware atual |
 | **Longo** | Família **Vera** (multimodal) / **Taba** (agentes) | 🔴 conceito |
 
-**Legenda:** 🟢 em uso · 🟡 pronto/parcial, falta um passo · ⚪ planejado · 🔴 longo prazo
+**Legenda:** 🟢 em uso · 🟡 pronto/parcial, falta um passo · ⚪ planejado · 🔴 longo prazo · ❌ testado e descartado
 
 > **Nota de hardware:** o alvo (16 GB RAM, CPU 4 núcleos, iGPU Intel bloqueada
 > por WDAC) comporta bem o tier **Mirim**. Os tiers **Eté/Guaçu** e as famílias

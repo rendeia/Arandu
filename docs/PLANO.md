@@ -95,7 +95,14 @@ D:\Arandu-nano\
   --cache-reuse 256                  PROMPT CACHING (v1.3): reusa prefixo entre turnos via KV shift
   --slot-save-path "cache"           persiste slot KV em disco -> sobrevive ao --sleep-idle-seconds 180
 
-### Otimização B (v1.3): Q4_0 com repack AVX2/AVX-512
+### Otimização B (v1.3): Q4_0 com repack AVX2/AVX-512 — TESTADA E DESCARTADA (jul/2026)
+> **Resultado empírico (2026-07-07):** testado no i5-1135G7 (AVX-512, backend
+> `ggml-cpu-icelake`) com o build atual do llama.cpp (9782). O Q4_0 **empatou**
+> com o Q4_K_M em tok/s (3 rodadas: médias ~9.95 vs ~9.92 t/s) — os +20-25%
+> prometidos NÃO se materializaram. O llama.cpp moderno já otimiza o Q4_K_M em
+> AVX-512 tão bem quanto o Q4_0. Como o Q4_0 tem qualidade pior, **fica
+> descartado** — mantém-se o Q4_K_M. Scripts abaixo ficam como legado.
+
 - Script: `treino/imatrix/regenerar_nano_q4_0.ps1` (re-quantiza Q8_0 -> Q4_0 com
   imatrix pt-BR; verifica CPU e avisa o ganho esperado).
 - Atalho: `Usar_Nano_Q4_0.bat` (define modelo.txt para Arandu_Nano_1.1_Q4_0.gguf).
