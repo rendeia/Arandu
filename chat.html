@@ -50,6 +50,26 @@
   /* ===== Main ===== */
   #main{flex:1;display:flex;flex-direction:column;min-width:0}
   #topbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border)}
+  .composer-tools{max-width:760px;margin:8px auto 0;padding:0 24px;display:flex;align-items:center}
+  .model-picker{position:relative}
+  .model-btn{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:5px 10px;cursor:pointer;font-size:12.5px;font-family:inherit;max-width:230px}
+  .model-btn:hover{border-color:var(--accent)}
+  .model-btn #modelBtnName{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .model-btn .chev{width:13px;height:13px;flex:none;fill:none;stroke:currentColor;stroke-width:2}
+  .model-menu{position:absolute;left:0;bottom:calc(100% + 6px);min-width:230px;background:var(--panel2);border:1px solid var(--border);border-radius:11px;box-shadow:0 -10px 28px rgba(0,0,0,.4);z-index:60;overflow:hidden}
+  .model-menu .mm-head{padding:9px 12px 5px;font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+  .model-menu .mm-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;cursor:pointer;font-size:13px;color:var(--text)}
+  .model-menu .mm-item:hover{background:var(--panel)}
+  .model-menu .mm-item .mm-check{color:var(--accent);opacity:0}
+  .model-menu .mm-item.active .mm-check{opacity:1}
+  .model-menu .mm-div{height:1px;background:var(--border);margin:4px 0}
+  .model-menu .mm-empty{padding:10px 12px;color:var(--muted);font-size:12px}
+  .troca-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);z-index:1000}
+  .troca-box{background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:26px 30px;text-align:center;max-width:330px;color:var(--text)}
+  .troca-spin{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;margin:0 auto 14px;animation:trocaSpin 1s linear infinite}
+  @keyframes trocaSpin{to{transform:rotate(360deg)}}
+  #trocaTxt{font-size:15px}
+  .troca-sub{margin-top:8px;font-size:12px;color:var(--muted)}
   .icon-btn{background:none;border:none;color:var(--text);cursor:pointer;padding:7px;border-radius:8px;display:flex;align-items:center;justify-content:center}
   .icon-btn:hover{background:var(--panel2)}
   #topTitle{font-weight:600;font-size:15px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -219,6 +239,15 @@
         <button id="sendBtn" onclick="onSend()" title="Enviar">
           <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
         <button id="falarBtn" onclick="ttsStop()" title="Voz do Arandu - clique para parar"><span class="eqbar"></span><span class="eqbar"></span><span class="eqbar"></span><span class="eqbar"></span><span class="eqbar"></span></button>
+      </div>
+      <div class="composer-tools">
+        <div id="modelPicker" class="model-picker">
+          <button id="modelBtn" class="model-btn" onclick="toggleModelMenu()" title="Trocar de modelo">
+            <span id="modelBtnName">Modelo</span>
+            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div id="modelMenu" class="model-menu" hidden></div>
+        </div>
       </div>
       <div class="hint">A IA roda localmente no seu dispositivo. As respostas podem conter erros.</div>
     </div>
@@ -984,6 +1013,7 @@ if('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged=carregarV
 const NOMES_MODELO={
   "Qwen_Qwen3-1.7B-Q4_K_M.gguf":"Arandu Mirim 1.1",     // Qwen3-1.7B (Arandu Mirim 1.1 - padrao, familia G1 eficiencia)
   "Arandu_Nano_1.1_Q4_0.gguf":"Arandu Mirim 1.1 Q4_0",  // mesmo modelo, quant Q4_0 c/ repack AVX (~20%% mais tok/s)
+  "arandu-mirim-1.2-Q4_K_M.gguf":"Arandu Mirim 1.2",    // modelo proprio (fine-tune sobre Qwen3-1.7B, 249 ex. pt-BR)
   "arandu-nano-1.0-Q4_K_M.gguf":"Arandu Mirim 1.0",     // modelo proprio (fine-tune sobre Llama-1B)
   // Katu Mirim 2.0 (G2 - Raciocinio) vive em https://github.com/rendeia/Katu
   // Para usar, siga integrar-rendeia.md desse repo: baixe o .gguf, copie o Usar_Katu_Mirim.bat
@@ -1001,8 +1031,112 @@ async function checarServidor(){
     const arq=(j.model_path||j.default_generation_settings?.model||"").split(/[\\/]/).pop();
     modeloArquivo=arq;
     dot.className='dot ok';txt.textContent="Conectado · "+nomeProjeto(arq);
+    const _bn=document.getElementById('modelBtnName'); if(_bn) _bn.textContent=nomeProjeto(arq);
   }catch(e){dot.className='dot bad';txt.textContent="Servidor offline";}
 }
+
+/* ============ Seletor de modelo (troca a quente via ajudante 8099) ============ */
+// O motor carrega 1 modelo por vez -> trocar = reiniciar o servidor com o novo .gguf.
+// O ajudante (8099) faz a troca e o reinício; aqui listamos, pedimos e esperamos voltar.
+let MODELOS_CACHE=[], MODELOS_OFFLINE=false;
+async function carregarModelos(){
+  try{
+    const r=await fetch(MEM_URL+"/modelos",{cache:'no-store',signal:AbortSignal.timeout(2500)});
+    const j=await r.json();
+    if(j&&j.ok&&Array.isArray(j.arquivos)){ MODELOS_OFFLINE=false; MODELOS_CACHE=j.arquivos; renderModelMenu(j.ativo||modeloArquivo); }
+    else { MODELOS_OFFLINE=true; MODELOS_CACHE=[]; renderModelMenu(modeloArquivo); }  // ajudante antigo (sem a rota /modelos)
+  }catch(e){ MODELOS_OFFLINE=true; MODELOS_CACHE=[]; renderModelMenu(modeloArquivo); }
+}
+// Ordem e agrupamento por família (dentro de cada família, do mais novo p/ o mais antigo).
+const GRUPOS_MODELO=[
+  {familia:"Arandu — eficiência", arquivos:[
+    "arandu-mirim-1.2-Q4_K_M.gguf",
+    "Qwen_Qwen3-1.7B-Q4_K_M.gguf",
+    "Arandu_Nano_1.1_Q4_0.gguf",
+    "arandu-nano-1.0-Q4_K_M.gguf",
+  ]},
+  {familia:"Katu — raciocínio", arquivos:[
+    "DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf",
+  ]},
+  {familia:"Base (Llama)", arquivos:[
+    "Llama-3.2-3B-Instruct-Q4_K_M.gguf",
+    "Llama-3.2-1B-Instruct-Q4_K_M.gguf",
+  ]},
+];
+function itemModelo(a,ativo){
+  const it=document.createElement('div'); it.className='mm-item'+(a===ativo?' active':'');
+  const nm=document.createElement('span'); nm.textContent=nomeProjeto(a); it.appendChild(nm);
+  const ck=document.createElement('span'); ck.className='mm-check'; ck.textContent='✓'; it.appendChild(ck);
+  it.onclick=()=>trocarModelo(a);
+  return it;
+}
+function renderModelMenu(ativo){
+  const menu=document.getElementById('modelMenu'); if(!menu) return;
+  menu.innerHTML="";
+  if(MODELOS_OFFLINE){ const d=document.createElement('div'); d.className='mm-empty'; d.textContent='Ajudante indisponível ou desatualizado. Feche a IA (Desligar_IA.bat) e abra de novo.'; menu.appendChild(d); return; }
+  const presentes=new Set(MODELOS_CACHE), usados=new Set();
+  let primeiro=true, algum=false;
+  const grupo=(familia,arqs)=>{
+    if(!arqs.length) return;
+    if(!primeiro){ const dv=document.createElement('div'); dv.className='mm-div'; menu.appendChild(dv); }
+    primeiro=false; algum=true;
+    const h=document.createElement('div'); h.className='mm-head'; h.textContent=familia; menu.appendChild(h);
+    arqs.forEach(a=>{ usados.add(a); menu.appendChild(itemModelo(a,ativo)); });
+  };
+  // famílias na ordem definida (só os .gguf presentes e com nome conhecido)
+  GRUPOS_MODELO.forEach(g=>grupo(g.familia, g.arquivos.filter(a=>presentes.has(a)&&NOMES_MODELO[a])));
+  // qualquer modelo nomeado presente que não esteja nos grupos acima
+  grupo("Outros", MODELOS_CACHE.filter(a=>NOMES_MODELO[a]&&!usados.has(a)));
+  if(!algum){ const d=document.createElement('div'); d.className='mm-empty'; d.textContent='Nenhum modelo encontrado na pasta.'; menu.appendChild(d); }
+}
+function toggleModelMenu(){
+  const m=document.getElementById('modelMenu'); if(!m) return;
+  if(m.hidden){ carregarModelos(); m.hidden=false; } else m.hidden=true;
+}
+document.addEventListener('click',e=>{
+  const p=document.getElementById('modelPicker');
+  if(p&&!p.contains(e.target)){ const m=document.getElementById('modelMenu'); if(m) m.hidden=true; }
+});
+async function trocarModelo(arquivo){
+  const m=document.getElementById('modelMenu'); if(m) m.hidden=true;
+  if(!arquivo||arquivo===modeloArquivo) return;   // já é o ativo
+  const nome=nomeProjeto(arquivo);
+  mostrarTrocaModelo(nome);
+  try{
+    const r=await fetch(MEM_URL+"/modelo",{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({arquivo})});
+    const j=await r.json();
+    if(!j||!j.ok) throw new Error((j&&j.erro)||'falha ao trocar');
+  }catch(e){ esconderTrocaModelo(); alert("Não consegui trocar o modelo: "+((e&&e.message)||e)); return; }
+  await esperarServidor(arquivo);   // espera o motor voltar com o novo modelo
+  esconderTrocaModelo();
+}
+async function esperarServidor(arquivoEsperado){
+  const alvo=cfg.url.replace(/\/$/,'')+"/props";
+  for(let i=0;i<60;i++){                     // até ~60s (recarregar o modelo)
+    await new Promise(r=>setTimeout(r,1000));
+    try{
+      const r=await fetch(alvo,{cache:'no-store',signal:AbortSignal.timeout(1500)});
+      if(r.ok){
+        const j=await r.json();
+        const arq=(j.model_path||j.default_generation_settings?.model||"").split(/[\\/]/).pop();
+        if(!arquivoEsperado||arq===arquivoEsperado){ modeloArquivo=arq; await checarServidor(); return true; }
+      }
+    }catch(e){}
+  }
+  await checarServidor();
+  return false;
+}
+function mostrarTrocaModelo(nome){
+  let el=document.getElementById('trocaModelo');
+  if(!el){
+    el=document.createElement('div'); el.id='trocaModelo'; el.className='troca-overlay';
+    el.innerHTML='<div class="troca-box"><div class="troca-spin"></div><div id="trocaTxt"></div><div class="troca-sub">O modelo está sendo carregado. Isso leva alguns segundos.</div></div>';
+    document.body.appendChild(el);
+  }
+  document.getElementById('trocaTxt').textContent='Trocando para '+nome+'…';
+  el.style.display='flex';
+}
+function esconderTrocaModelo(){ const el=document.getElementById('trocaModelo'); if(el) el.style.display='none'; }
 
 /* ============ Input / atalhos ============ */
 const input=document.getElementById('input');

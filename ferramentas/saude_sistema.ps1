@@ -4,13 +4,16 @@
 #  Servidor HTTP local em PowerShell PURO (sem instalar nada).
 #  Expoe dados de RAM, disco, CPU e arquivos limpaveis para o painel.
 #
-#  ENDPOINTS (todos GET, JSON, apenas 127.0.0.1):
-#     /saude    -> RAM, discos, CPU, uptime
-#     /limpeza  -> lista de locais limpaveis com tamanho (NAO apaga nada)
-#     /ping     -> teste de vida
+#  ENDPOINTS (JSON, apenas 127.0.0.1):
+#     /saude    -> RAM, discos, CPU, uptime            (GET)
+#     /limpeza  -> lista de locais limpaveis (NAO apaga) (GET)
+#     /modelos  -> lista os .gguf presentes + o ativo    (GET)
+#     /modelo   -> troca o modelo ativo e REINICIA o motor (POST {arquivo})
+#     /ping     -> teste de vida                          (GET)
 #
 #  SEGURANCA: escuta SO em 127.0.0.1 (nao acessivel pela rede).
-#             NUNCA apaga arquivos. So mede e relata.
+#             NUNCA apaga arquivos nem envia nada. A UNICA acao de escrita e o
+#             /modelo, que reinicia o processo do motor de IA (local, benigno).
 #
 #  Uso:  powershell -ExecutionPolicy Bypass -File saude_sistema.ps1
 #        (o Painel_Saude.vbs faz isso escondido por voce)
@@ -254,6 +257,74 @@ function Get-Email {
             dica = 'Tenha o Outlook CLASSICO instalado e configurado. Detalhe: ' + $_.Exception.Message
         }
     }
+}
+
+# ---------- Seletor de modelo: troca o .gguf ativo e REINICIA o motor ----------
+# UNICA acao de escrita do ajudante. Nao apaga nem envia nada; so reinicia o
+# processo do motor de IA (llama-server/llamafile) com o novo modelo, usando os
+# MESMOS flags do IA_Portatil.vbs (contexto 2048, KV q8_0, flash-attn, cache).
+$script:ROOT = Split-Path $PSScriptRoot -Parent
+
+function Get-ModeloAtivo {
+    $cfg = Join-Path $script:ROOT 'modelo.txt'
+    if (Test-Path -LiteralPath $cfg) {
+        $l = (Get-Content -LiteralPath $cfg -TotalCount 1 -ErrorAction SilentlyContinue)
+        if ($l) { return $l.Trim() }
+    }
+    return ''
+}
+
+function Get-Modelos {
+    $arqs = @()
+    Get-ChildItem -LiteralPath $script:ROOT -Filter '*.gguf' -File -ErrorAction SilentlyContinue |
+        ForEach-Object { $arqs += $_.Name }
+    return [pscustomobject]@{ ok = $true; ativo = (Get-ModeloAtivo); arquivos = $arqs }
+}
+
+function Restart-Motor([string]$modeloPath) {
+    $srvExe   = Join-Path $script:ROOT 'llama\llama-server.exe'
+    $exe      = Join-Path $script:ROOT 'llamafile.exe'
+    $cacheDir = Join-Path $script:ROOT 'cache'
+    if (-not (Test-Path -LiteralPath $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null }
+    # encerra o motor atual (os dois nomes possiveis) e espera liberar a porta 8080
+    foreach ($nome in @('llama-server.exe','llamafile.exe')) {
+        try { taskkill /IM $nome /F 2>$null | Out-Null } catch {}
+    }
+    Start-Sleep -Milliseconds 1500
+    # 1) prefere o llama-server.exe (passa no AppLocker); 2) cai para o llamafile.exe
+    if (Test-Path -LiteralPath $srvExe) {
+        $a = @('-m', $modeloPath, '--host','127.0.0.1','--port','8080','-c','2048','-t','3','-fa','on',
+               '-ctk','q8_0','-ctv','q8_0','-ub','256','-b','512','--no-webui',
+               '--cache-reuse','256','--slot-save-path', $cacheDir)
+        Start-Process -FilePath $srvExe -ArgumentList $a -WorkingDirectory (Join-Path $script:ROOT 'llama') -WindowStyle Hidden
+        return $true
+    }
+    if (Test-Path -LiteralPath $exe) {
+        $a = @('--server','-m', $modeloPath, '--host','127.0.0.1','--port','8080','-c','2048','-t','3','-fa','on',
+               '-ctk','q8_0','-ctv','q8_0','-ub','256','-b','512','--gpu','disable','--sleep-idle-seconds','180',
+               '--cache-reuse','256','--slot-save-path', $cacheDir)
+        Start-Process -FilePath $exe -ArgumentList $a -WorkingDirectory $script:ROOT -WindowStyle Hidden
+        return $true
+    }
+    return $false
+}
+
+function Set-Modelo([string]$arquivo) {
+    # valida o nome (sem path traversal) e a existencia na pasta do projeto
+    if ([string]::IsNullOrWhiteSpace($arquivo) -or ($arquivo -notmatch '^[A-Za-z0-9._\-]+\.gguf$')) {
+        return [pscustomobject]@{ ok = $false; erro = 'nome de arquivo invalido' }
+    }
+    $caminho = Join-Path $script:ROOT $arquivo
+    if (-not (Test-Path -LiteralPath $caminho)) {
+        return [pscustomobject]@{ ok = $false; erro = 'modelo nao encontrado na pasta do projeto' }
+    }
+    # grava modelo.txt (UTF-8 sem BOM) e reinicia o motor
+    $cfg = Join-Path $script:ROOT 'modelo.txt'
+    [System.IO.File]::WriteAllText($cfg, $arquivo + "`r`n", (New-Object System.Text.UTF8Encoding($false)))
+    if (-not (Restart-Motor $caminho)) {
+        return [pscustomobject]@{ ok = $false; erro = 'nao encontrei o motor (llama-server.exe/llamafile.exe) para reiniciar' }
+    }
+    return [pscustomobject]@{ ok = $true; ativo = $arquivo; aviso = 'Trocando o modelo. O servidor reinicia em alguns segundos.' }
 }
 
 # ---------- voz natural (Piper TTS, opcional) ----------
@@ -554,6 +625,32 @@ while ($listener.IsListening) {
             continue
         }
 
+        # /modelos (GET) + /modelo (POST): seletor de modelo na interface.
+        if ($rota -eq '/modelos' -or $rota -eq '/modelo') {
+            $resp = $null
+            try {
+                if ($rota -eq '/modelos' -and $req.HttpMethod -eq 'GET') {
+                    $resp = Get-Modelos
+                }
+                elseif ($rota -eq '/modelo' -and $req.HttpMethod -eq 'POST') {
+                    $corpo = ''
+                    try { $sr = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8); $corpo = $sr.ReadToEnd(); $sr.Close() } catch {}
+                    $d = $null; try { $d = $corpo | ConvertFrom-Json } catch {}
+                    $resp = Set-Modelo ([string]$d.arquivo)
+                    if (-not $resp.ok) { $res.StatusCode = 400 }
+                }
+                else { $res.StatusCode = 405; $resp = [pscustomobject]@{ ok = $false; erro = 'metodo invalido' } }
+            } catch {
+                $res.StatusCode = 500; $resp = [pscustomobject]@{ ok = $false; erro = ([string]$_.Exception.Message) }
+            }
+            $jb = [System.Text.Encoding]::UTF8.GetBytes(($resp | ConvertTo-Json -Depth 6))
+            $res.ContentType = 'application/json; charset=utf-8'
+            $res.ContentLength64 = $jb.Length
+            $res.OutputStream.Write($jb, 0, $jb.Length)
+            $res.Close()
+            continue
+        }
+
         $obj = $null
         switch ($rota) {
             '/saude'   { $obj = Get-Saude }
@@ -563,7 +660,7 @@ while ($listener.IsListening) {
             '/ping'    { $obj = [pscustomobject]@{ ok = $true; servico = 'arandu-saude'; porta = $PORTA } }
             default    {
                 $res.StatusCode = 404
-                $obj = [pscustomobject]@{ erro = 'rota desconhecida'; rotas = @('/saude','/limpeza','/agenda','/email','/falar','/ocr','/memoria','/memoria/item','/memoria/perfil','/memoria/remover','/ping') }
+                $obj = [pscustomobject]@{ erro = 'rota desconhecida'; rotas = @('/saude','/limpeza','/modelos','/modelo','/agenda','/email','/falar','/ocr','/memoria','/memoria/item','/memoria/perfil','/memoria/remover','/ping') }
             }
         }
 
