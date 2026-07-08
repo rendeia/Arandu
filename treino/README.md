@@ -50,7 +50,7 @@ node treino/validar_dataset.mjs
 ```
 
 Ele aponta erros que quebram o treino (JSON inválido, exemplo sem resposta) e
-alertas (duplicatas, falta de `system`). Estado atual: **264 exemplos**, sendo 38
+alertas (duplicatas, falta de `system`). Estado atual: **282 exemplos**, sendo 38
 multi-turno — ver [../docs/PLANO_1.2_ACOES.md](../docs/PLANO_1.2_ACOES.md).
 
 > **System prompt = o de produção.** O `system` de cada exemplo espelha o prompt
