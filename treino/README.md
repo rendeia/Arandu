@@ -50,9 +50,14 @@ node treino/validar_dataset.mjs
 ```
 
 Ele aponta erros que quebram o treino (JSON inválido, exemplo sem resposta) e
-alertas (duplicatas, falta de `system`). Estado atual: **249 exemplos** (meta de
-250 atingida), sendo 38 multi-turno — ver
-[../docs/PLANO_1.2_ACOES.md](../docs/PLANO_1.2_ACOES.md).
+alertas (duplicatas, falta de `system`). Estado atual: **264 exemplos**, sendo 38
+multi-turno — ver [../docs/PLANO_1.2_ACOES.md](../docs/PLANO_1.2_ACOES.md).
+
+> **System prompt = o de produção.** O `system` de cada exemplo espelha o prompt
+> que o `chat.html` realmente envia (identidade Rendeia + regras + `/no_think`),
+> e não um texto curto genérico. Alinhar treino e produção é o que faz os
+> comportamentos aprendidos (recusar previsão, encaminhar emergência ao SAMU)
+> **dispararem no chat** — quando os dois divergem, o modelo base volta a dominar.
 
 ## Próximas gerações (nomenclatura)
 Ver [`../docs/NOMENCLATURA_MODELOS.md`](../docs/NOMENCLATURA_MODELOS.md). Arandu (G1 eficiência) → Katu (G2 raciocínio)

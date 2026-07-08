@@ -50,6 +50,19 @@ _Atualizado em 2026-07-06._
 
 **Legenda:** 🟢 em uso · 🟡 pronto/parcial, falta um passo · ⚪ planejado · 🔴 longo prazo · ❌ testado e descartado
 
+## 4. Política de versão
+
+Um número de versão (1.0, 1.1, 1.2…) só é atribuído a um modelo **testado, aprovado
+no A/B e promovido a padrão**. Entre um ship e outro, o trabalho fica num único
+**candidato**, retreinado _por cima_ — sem criar número novo a cada tentativa. Assim a
+numeração cresce de forma linear (só quando algo melhor que o padrão atual sobe),
+não a cada experimento.
+
+- **1.1** — padrão em produção (Qwen3-1.7B + imatrix pt-BR).
+- **candidato 1.2** — fine-tune pt-BR sobre o Qwen3-1.7B; em iteração até passar no
+  A/B contra a 1.1. A **imatrix** é o passo de acabamento aplicado _sobre_ esse
+  candidato, não uma versão paralela.
+
 > **Nota de hardware:** o alvo (16 GB RAM, CPU 4 núcleos, iGPU Intel bloqueada
 > por WDAC) comporta bem o tier **Mirim**. Os tiers **Eté/Guaçu** e as famílias
 > **Vera/Taba** dependem de hardware acima do alvo — por isso ficam no longo
