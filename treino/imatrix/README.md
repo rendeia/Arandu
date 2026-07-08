@@ -73,12 +73,18 @@ llamafile.exe -m Qwen_Qwen3-1.7B-Q4_K_M.gguf --cli \
 # Esperado: "Santos Dumont era brasileiro."
 ```
 
-## Atalho: gerar a Arandu Mirim 1.2 (script automatizado)
+## Aplicar a imatrix pt-BR (passo de acabamento)
 
-Os passos 2 e 3 acima estão automatizados em [`regenerar_nano_1.2.ps1`](regenerar_nano_1.2.ps1).
-O script monta um **corpus ampliado** (`calibracao_pt.txt` + `rag/docs/*.txt`),
-roda o `llama-imatrix` e o `llama-quantize`, e salva o resultado como
-`Arandu_Nano_1.2_Q4_K_M.gguf` na raiz do projeto.
+> **Nomenclatura:** a **Arandu Mirim 1.2** é o **fine-tune** pt-BR sobre o Qwen3-1.7B
+> (ver [`../../docs/PLANO_1.2_ACOES.md`](../../docs/PLANO_1.2_ACOES.md)), já promovida a
+> padrão. A imatrix aqui é um **passo de acabamento** aplicado _sobre_ um modelo — não
+> uma versão à parte. O script legado `regenerar_nano_1.2.ps1` requantiza o **Qwen3
+> base**; para calibrar o **fine-tune 1.2**, exporte-o do Colab em Q8_0 (ou F16) e
+> aponte a fonte do script para esse `.gguf`.
+
+Os passos 2 e 3 acima estão automatizados em [`regenerar_nano_1.2.ps1`](regenerar_nano_1.2.ps1):
+monta um corpus ampliado (`calibracao_pt.txt` + `rag/docs/*.txt`) e roda o
+`llama-imatrix` + `llama-quantize`.
 
 ```powershell
 # Pré-requisito: baixar Qwen3-1.7B-Q8_0.gguf (~1,83 GB) na raiz do projeto.
@@ -89,11 +95,10 @@ PowerShell -ExecutionPolicy Bypass -File treino\imatrix\regenerar_nano_1.2.ps1
 Tempo total: 30 min – 2 h em CPU (depende de `--chunks`). Para ativar a 1.2 no
 Arandu, edite `modelo.txt` apontando para `Arandu_Nano_1.2_Q4_K_M.gguf`.
 
-> **Honestidade sobre o ganho:** a 1.2 será **incrementalmente** melhor que a 1.1
-> em pt-BR (corpus de calibração 3× maior, mesmo domínio). Não é um novo
-> fine-tune — para um salto real de qualidade, o caminho é ampliar
-> `treino/dataset_arandu.jsonl` (hoje ~40 exemplos) para 200+ e re-treinar no
-> Colab usando `treino/Arandu_Nano_Finetuning.ipynb`.
+> **Honestidade sobre o ganho:** a imatrix dá um ganho **incremental** em pt-BR
+> (mesma RAM e velocidade). O salto de qualidade real veio do **fine-tune** — o
+> `treino/dataset_arandu.jsonl` foi de ~40 para 282 exemplos e retreinado no Colab.
+> A imatrix apenas lapida a quantização por cima desse modelo.
 
 ## Variante rápida: Q4_0 com repack AVX2/AVX-512 (Otimização B)
 
