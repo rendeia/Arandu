@@ -29,7 +29,8 @@ _Atualizado em 2026-07-06._
 |---|---|---|
 | Repo da família Arandu | `rendeia/Arandu` | plataforma + família G1 |
 | Repo da família Katu | `rendeia/Katu` | família G2 (repo próprio) |
-| Modelo padrão | **Arandu Mirim 1.1** | Qwen3-1.7B + imatrix pt-BR |
+| Modelo padrão | **Arandu Mirim 1.2** | fine-tune próprio pt-BR sobre Qwen3-1.7B |
+| Versão anterior | Arandu Mirim 1.1 | Qwen3-1.7B + imatrix pt-BR |
 | Modelo próprio anterior | Arandu Mirim 1.0 | fine-tune sobre Llama-1B |
 | Modelo de raciocínio | Katu Mirim 2.0 | DeepSeek-R1-Distill-Qwen-1.5B |
 | Edição portátil | **Arandu Nano** | roda de USB, duplo-clique |
@@ -42,7 +43,7 @@ _Atualizado em 2026-07-06._
 | ~~Q4_0 + AVX-512 como velocidade padrão~~ | **testado e descartado** (jul/2026) | ❌ empatou com Q4_K_M; sem ganho |
 | **Curto** (semanas) | Release público com os instaladores Desktop | 🟡 instaladores prontos, falta publicar |
 | **Curto** | Assinar os instaladores (code signing) | ⚪ opcional (custo de certificado) |
-| **Médio** (meses) | Ampliar dataset → **Arandu Mirim 1.2** (base Qwen3-1.7B) | ⚪ plano em [PLANO_1.2_ACOES.md](PLANO_1.2_ACOES.md) — o que mais melhora a qualidade |
+| ~~Ampliar dataset → **Arandu Mirim 1.2**~~ | **feito — promovida a padrão** | 🟢 fine-tune pt-BR sobre Qwen3; ganha em segurança/identidade no A/B (ver [PLANO_1.2_ACOES.md](PLANO_1.2_ACOES.md)) |
 | **Médio** | Memória + **ações assistidas** (criar evento, rascunhar e-mail) | 🟡 leitura pronta, falta agir — plano em [PLANO_1.2_ACOES.md](PLANO_1.2_ACOES.md) |
 | **Contínuo** | Voz + integração com o PC | 🟢 parcial, evoluindo |
 | **Longo** (depende de hardware) | Arandu **Eté** (~3B) / **Guaçu** (~7B) | 🔴 inviável no hardware atual |
@@ -58,10 +59,11 @@ no A/B e promovido a padrão**. Entre um ship e outro, o trabalho fica num únic
 numeração cresce de forma linear (só quando algo melhor que o padrão atual sobe),
 não a cada experimento.
 
-- **1.1** — padrão em produção (Qwen3-1.7B + imatrix pt-BR).
-- **candidato 1.2** — fine-tune pt-BR sobre o Qwen3-1.7B; em iteração até passar no
-  A/B contra a 1.1. A **imatrix** é o passo de acabamento aplicado _sobre_ esse
-  candidato, não uma versão paralela.
+- **1.2** — padrão em produção: fine-tune pt-BR sobre o Qwen3-1.7B, aprovado no A/B
+  contra a 1.1 (ganha em segurança e identidade). Limitação conhecida: a distinção
+  "mais/mas" ainda escapa (limite do 1.7B — reforço não venceu o instinto do modelo
+  base). A **imatrix** é o passo de acabamento aplicado _sobre_ este modelo.
+- **1.1** — versão anterior (Qwen3-1.7B + imatrix pt-BR), ainda selecionável no chat.
 
 > **Nota de hardware:** o alvo (16 GB RAM, CPU 4 núcleos, iGPU Intel bloqueada
 > por WDAC) comporta bem o tier **Mirim**. Os tiers **Eté/Guaçu** e as famílias

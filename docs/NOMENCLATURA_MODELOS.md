@@ -38,7 +38,8 @@ rodando o modelo `Arandu Mirim 1.1`.
 ### Arandu — Geração 1.0: Fundação e Eficiência
 Modelos de entrada, rápidos e de baixo custo computacional.
 - **Arandu Mirim 1.0** — fine-tune próprio sobre Llama-1B (versão anterior)
-- **Arandu Mirim 1.1** — Qwen3-1.7B + imatrix pt-BR (padrão atual)
+- **Arandu Mirim 1.1** — Qwen3-1.7B + imatrix pt-BR (versão anterior)
+- **Arandu Mirim 1.2** — fine-tune próprio pt-BR sobre Qwen3-1.7B (**padrão atual**)
 - Arandu Eté 1.x — planejado (modelo maior, ~3B, quando viável em CPU+USB)
 - Arandu Guaçu 1.x — planejado (~7B)
 
@@ -74,7 +75,8 @@ nomeie o `.gguf` e adicione a entrada no mapa.
 
 | Arquivo GGUF | Nome exibido | Observação |
 |---|---|---|
-| `Qwen_Qwen3-1.7B-Q4_K_M.gguf` | **Arandu Mirim 1.1** | Qwen3-1.7B, **padrão atual** (non-thinking) |
+| `arandu-mirim-1.2-Q4_K_M.gguf` | **Arandu Mirim 1.2** | fine-tune pt-BR sobre Qwen3-1.7B, **padrão atual** (non-thinking) |
+| `Qwen_Qwen3-1.7B-Q4_K_M.gguf` | Arandu Mirim 1.1 | Qwen3-1.7B + imatrix pt-BR (versão anterior) |
 | `Arandu_Nano_1.1_Q4_0.gguf` | Arandu Mirim 1.1 Q4_0 | mesmo modelo, quant Q4_0 c/ repack AVX-512/AVX2 (~20% mais tok/s) |
 | `arandu-nano-1.0-Q4_K_M.gguf` | Arandu Mirim 1.0 | fine-tune próprio sobre Llama-1B (versão anterior) |
 | `Llama-3.2-1B-Instruct-Q4_K_M.gguf` | Llama 1B (base) | base, rápido/leve |
