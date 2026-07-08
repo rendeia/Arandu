@@ -42,6 +42,18 @@ Dicas:
 - Pode incluir conversas de vários turnos (mais mensagens no `messages`).
 - Mais exemplos bons = modelo melhor. Aumente o `dataset.jsonl` aos poucos.
 
+## Validar o dataset antes de treinar
+Antes de subir para o Colab, rode o validador (checa JSON, papéis, duplicatas):
+
+```sh
+node treino/validar_dataset.mjs
+```
+
+Ele aponta erros que quebram o treino (JSON inválido, exemplo sem resposta) e
+alertas (duplicatas, falta de `system`). Estado atual: **249 exemplos** (meta de
+250 atingida), sendo 38 multi-turno — ver
+[../docs/PLANO_1.2_ACOES.md](../docs/PLANO_1.2_ACOES.md).
+
 ## Próximas gerações (nomenclatura)
 Ver [`../docs/NOMENCLATURA_MODELOS.md`](../docs/NOMENCLATURA_MODELOS.md). Arandu (G1 eficiência) → Katu (G2 raciocínio)
 → Vera (G3 multimodal) → Taba (G4 agentes).
