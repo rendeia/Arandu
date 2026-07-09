@@ -88,7 +88,44 @@ sempre em Releases/HF, nunca no site.
 
 ---
 
-## 6. Princípios (o que NÃO abrir mão)
+## 6. Fluxo de evolução das famílias (o norte)
+
+Cada família empurra o **seu** eixo — sem invadir o do vizinho. A numeração
+G1→G4 reflete uma dependência real: agentes (Taba) precisam de raciocínio
+(Katu), que roda sobre a base eficiente (Arandu). Vera (multimodal) é um ramo
+paralelo, mais pesado.
+
+```mermaid
+flowchart LR
+  A["Arandu · G1<br/>eficiência (base)"] -->|+ pensar| K["Katu · G2<br/>raciocínio"]
+  K -->|+ agir| T["Taba · G4<br/>agentes"]
+  A -. ramo paralelo .-> V["Vera · G3<br/>multimodal"]
+```
+
+**Fidelidade dos eixos hoje:** Arandu ✅ eficiência (CPU, `/no_think`, Q4_K_M);
+Katu ✅ raciocínio (base R1-distill, pensa antes de responder); Vera/Taba ⚪ conceito.
+
+**Regra anti-borrão:** as ações assistidas de hoje vivem no Arandu, mas são a
+*semente* da Taba. No Arandu, ação = **um passo, sempre confirmado**
+(conveniência). Agência profunda (planejar + encadear ferramentas sozinho) é o
+que define a Taba.
+
+### O que isso significa para codificar
+
+- **Arandu (agora):** manter a eficiência + o Mirim afiado. Ações **finas e
+  confirmadas** — não deixar virar agente. Métrica: qualidade por MB, tok/s.
+- **Katu (próximo investimento):** aprofundar raciocínio — é a **ponte para a
+  Taba**. Investir aqui paga duas famílias.
+- **Taba (quando chegar):** não começar do zero — juntar *raciocínio da Katu
+  (planejar)* + *infra de ações do Arandu (executar)*.
+- **Vera:** experimental até um VLM pequeno caber no alvo.
+
+**Teste de fidelidade** (por família, antes de adicionar algo):
+- Arandu: *"isso me deixa mais rápido/leve, ou só mais capaz?"*
+- Katu: *"isso melhora o raciocínio, ou é só velocidade?"*
+- Taba: *"é um passo único confirmado (Arandu), ou o modelo planejando sozinho (Taba)?"*
+
+## 7. Princípios (o que NÃO abrir mão)
 
 1. **Offline e privado** — nada sai da máquina do usuário.
 2. **Leve** — roda na CPU, RAM baixa, cabe no pendrive.
