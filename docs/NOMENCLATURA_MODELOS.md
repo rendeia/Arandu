@@ -50,11 +50,20 @@ Pensam antes de responder (geram um bloco `<think>` interno).
 > A família Katu vive em **repo próprio** — código, lançadores e doc específicos:
 > 👉 [github.com/rendeia/Katu](https://github.com/rendeia/Katu)
 
-- **Katu Mirim 2.0** — disponível (DeepSeek-R1-Distill-Qwen-1.5B). Mesma RAM do
-  Arandu Mirim 1.1; foco em raciocínio. Integração na plataforma: ~5 min,
-  passo a passo em [rendeia/Katu/integrar-rendeia.md](https://github.com/rendeia/Katu/blob/main/integrar-rendeia.md).
+Duas **edições** (eixos independentes — ver Nano/Desktop):
+- **Katu Mirim 2.1** — edição **CPU/pendrive**, na plataforma Rendeia:
+  **DeepSeek-R1-Distill-Qwen-1.5B** (Q4_K_M), raciocínio de verdade (pensa com
+  `<think>` nativo). Roda no mesmo llamafile do Arandu; o chat mostra o
+  "Pensamento" sozinho. Ativa via `Usar_Katu_Mirim.bat`.
+- **Katu Mirim 2.0** — edição **WebGPU/browser** (Llama-3.2-3B via WebLLM), em
+  [github.com/rendeia/Katu](https://github.com/rendeia/Katu). Roda na iGPU/GPU,
+  zero instalação — hoje serve de **demo** (não roda no hardware-alvo, que tem a
+  iGPU bloqueada). Modelo geral: só mostra raciocínio se pedido "passo a passo".
 - Katu Eté 2.x — planejado
 - Katu Guaçu 2.x — planejado
+
+> **Nota de fidelidade:** a edição CPU (2.1) é a que cumpre o eixo "raciocínio"
+> de fato e roda no hardware-alvo. A 2.0 (WebGPU) é vitrine.
 
 ### Vera — Geração 3.0: Alta Capacidade e Visão
 Modelos multimodais: leem documentos complexos, imagens e visão computacional.
@@ -79,6 +88,7 @@ nomeie o `.gguf` e adicione a entrada no mapa.
 | `Qwen_Qwen3-1.7B-Q4_K_M.gguf` | Arandu Mirim 1.1 | Qwen3-1.7B + imatrix pt-BR (versão anterior) |
 | `Arandu_Nano_1.1_Q4_0.gguf` | Arandu Mirim 1.1 Q4_0 | mesmo modelo, quant Q4_0 c/ repack AVX-512/AVX2 (~20% mais tok/s) |
 | `arandu-nano-1.0-Q4_K_M.gguf` | Arandu Mirim 1.0 | fine-tune próprio sobre Llama-1B (versão anterior) |
+| `DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf` | **Katu Mirim 2.1** | G2 raciocínio (CPU); pensa com `<think>` — baixar à parte |
 | `Llama-3.2-1B-Instruct-Q4_K_M.gguf` | Llama 1B (base) | base, rápido/leve |
 | `Llama-3.2-3B-Instruct-Q4_K_M.gguf` | Llama 3B (base) | base, mais qualidade |
 

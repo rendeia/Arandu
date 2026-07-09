@@ -17,7 +17,7 @@ _Criado em 2026-07-09._
 | Publicação | GitHub (`rendeia/Arandu`) + Hugging Face (`rendeia/Arandu-Mirim-1.2-GGUF`) |
 | Interface | Seletor de modelo no chat; multilíngue; voz; memória; RAG |
 | **Ações assistidas** | Código completo (criar evento / rascunhar e-mail, com card de confirmação) — falta o teste ponta a ponta com Outlook |
-| Família Katu (G2) | Repo próprio + Space WebGPU (roda no navegador) |
+| Família Katu (G2) | **Katu Mirim 2.1** (CPU/pendrive, DeepSeek-R1-Distill-1.5B, raciocínio real) integrada ao chat; edição WebGPU 2.0 vira demo |
 
 **Princípio que guia tudo:** IA em português, **100% offline, na CPU, do
 pendrive**, com privacidade real. Cada decisão respeita RAM baixa, velocidade e
@@ -103,7 +103,8 @@ flowchart LR
 ```
 
 **Fidelidade dos eixos hoje:** Arandu ✅ eficiência (CPU, `/no_think`, Q4_K_M);
-Katu ✅ raciocínio (base R1-distill, pensa antes de responder); Vera/Taba ⚪ conceito.
+Katu ✅ raciocínio **de verdade** na edição CPU **2.1** (DeepSeek-R1-Distill-1.5B,
+pensa com `<think>` nativo — a 2.0 WebGPU rodava Llama-3B, geral); Vera/Taba ⚪ conceito.
 
 **Regra anti-borrão:** as ações assistidas de hoje vivem no Arandu, mas são a
 *semente* da Taba. No Arandu, ação = **um passo, sempre confirmado**
