@@ -5,15 +5,18 @@
 #  Expoe dados de RAM, disco, CPU e arquivos limpaveis para o painel.
 #
 #  ENDPOINTS (JSON, apenas 127.0.0.1):
-#     /saude    -> RAM, discos, CPU, uptime            (GET)
-#     /limpeza  -> lista de locais limpaveis (NAO apaga) (GET)
-#     /modelos  -> lista os .gguf presentes + o ativo    (GET)
-#     /modelo   -> troca o modelo ativo e REINICIA o motor (POST {arquivo})
-#     /ping     -> teste de vida                          (GET)
+#     /saude          -> RAM, discos, CPU, uptime             (GET)
+#     /limpeza        -> lista de locais limpaveis (NAO apaga) (GET)
+#     /modelos        -> lista os .gguf presentes + o ativo    (GET)
+#     /modelo         -> troca o modelo e REINICIA o motor      (POST {arquivo})
+#     /agenda/criar   -> cria evento no Outlook                 (POST {assunto,inicio,fim,local})
+#     /email/rascunho -> cria RASCUNHO de e-mail (NAO envia)    (POST {para,assunto,corpo})
+#     /ping           -> teste de vida                          (GET)
 #
-#  SEGURANCA: escuta SO em 127.0.0.1 (nao acessivel pela rede).
-#             NUNCA apaga arquivos nem envia nada. A UNICA acao de escrita e o
-#             /modelo, que reinicia o processo do motor de IA (local, benigno).
+#  SEGURANCA: escuta SO em 127.0.0.1 (nao acessivel pela rede). NUNCA apaga
+#             arquivos nem ENVIA e-mail. As acoes de escrita (trocar modelo, criar
+#             evento, rascunhar e-mail) sao ADITIVAS/reversiveis e disparadas so
+#             apos confirmacao explicita do usuario no chat.
 #
 #  Uso:  powershell -ExecutionPolicy Bypass -File saude_sistema.ps1
 #        (o Painel_Saude.vbs faz isso escondido por voce)
@@ -259,10 +262,60 @@ function Get-Email {
     }
 }
 
+# ---------- Outlook: ACOES de escrita (criar evento, rascunhar e-mail) ----------
+# Acoes ADITIVAS e reversiveis: criam um evento no calendario ou um RASCUNHO de
+# e-mail. NUNCA enviam nem apagam. O modelo PROPOE, o usuario CONFIRMA no chat,
+# e so entao o chat chama estas rotas.
+
+function New-Agenda($dados) {
+    try {
+        if (-not $dados -or [string]::IsNullOrWhiteSpace([string]$dados.assunto)) {
+            return [pscustomobject]@{ ok = $false; erro = 'Informe ao menos o assunto do evento.' }
+        }
+        $ol   = Get-Outlook
+        $appt = $ol.CreateItem(1)                 # 1 = olAppointmentItem
+        $appt.Subject = [string]$dados.assunto
+        if ($dados.inicio) { $appt.Start = [datetime]::Parse([string]$dados.inicio) }
+        if ($dados.fim)        { $appt.End = [datetime]::Parse([string]$dados.fim) }
+        elseif ($dados.inicio) { $appt.End = ([datetime]::Parse([string]$dados.inicio)).AddHours(1) }
+        if ($dados.local) { $appt.Location = [string]$dados.local }
+        if ($dados.corpo) { $appt.Body     = [string]$dados.corpo }
+        $appt.ReminderSet = $true
+        $appt.Save()
+        return [pscustomobject]@{
+            ok = $true; assunto = [string]$appt.Subject
+            inicio = $appt.Start.ToString('yyyy-MM-dd HH:mm')
+            fim    = $appt.End.ToString('yyyy-MM-dd HH:mm')
+            local  = [string]$appt.Location
+            aviso  = 'Evento criado no seu calendario. Voce pode edita-lo ou apaga-lo no Outlook.'
+        }
+    } catch {
+        return [pscustomobject]@{ ok = $false; erro = 'Nao consegui criar o evento no Outlook.'; dica = [string]$_.Exception.Message }
+    }
+}
+
+function New-EmailRascunho($dados) {
+    try {
+        if (-not $dados) { return [pscustomobject]@{ ok = $false; erro = 'Dados do e-mail ausentes.' } }
+        $ol   = Get-Outlook
+        $mail = $ol.CreateItem(0)                 # 0 = olMailItem
+        if ($dados.para)    { $mail.To      = [string]$dados.para }
+        if ($dados.assunto) { $mail.Subject = [string]$dados.assunto }
+        if ($dados.corpo)   { $mail.Body    = [string]$dados.corpo }
+        $mail.Save()                              # grava em Rascunhos
+        try { $mail.Display() } catch {}          # abre p/ revisao -> NAO envia
+        return [pscustomobject]@{
+            ok = $true; para = [string]$mail.To; assunto = [string]$mail.Subject
+            aviso = 'Rascunho criado e aberto para revisao. NADA foi enviado.'
+        }
+    } catch {
+        return [pscustomobject]@{ ok = $false; erro = 'Nao consegui criar o rascunho no Outlook.'; dica = [string]$_.Exception.Message }
+    }
+}
+
 # ---------- Seletor de modelo: troca o .gguf ativo e REINICIA o motor ----------
-# UNICA acao de escrita do ajudante. Nao apaga nem envia nada; so reinicia o
-# processo do motor de IA (llama-server/llamafile) com o novo modelo, usando os
-# MESMOS flags do IA_Portatil.vbs (contexto 2048, KV q8_0, flash-attn, cache).
+# Acao de escrita local: reinicia o processo do motor de IA (llama-server/llamafile)
+# com o novo modelo, usando os MESMOS flags do IA_Portatil.vbs. Nao apaga nada.
 $script:ROOT = Split-Path $PSScriptRoot -Parent
 
 function Get-ModeloAtivo {
@@ -651,6 +704,31 @@ while ($listener.IsListening) {
             continue
         }
 
+        # /agenda/criar + /email/rascunho: ACOES de escrita (POST JSON). O modelo
+        # propoe, o usuario confirma no chat; e-mail e sempre RASCUNHO (nao envia).
+        if ($rota -eq '/agenda/criar' -or $rota -eq '/email/rascunho') {
+            $resp = $null
+            if ($req.HttpMethod -ne 'POST') {
+                $res.StatusCode = 405; $resp = [pscustomobject]@{ ok = $false; erro = 'use POST' }
+            } else {
+                $corpo = ''
+                try { $sr = New-Object System.IO.StreamReader($req.InputStream, [System.Text.Encoding]::UTF8); $corpo = $sr.ReadToEnd(); $sr.Close() } catch {}
+                $d = $null; try { $d = $corpo | ConvertFrom-Json } catch {}
+                if ($null -eq $d) {
+                    $res.StatusCode = 400; $resp = [pscustomobject]@{ ok = $false; erro = 'JSON invalido no corpo' }
+                } else {
+                    if ($rota -eq '/agenda/criar') { $resp = New-Agenda $d } else { $resp = New-EmailRascunho $d }
+                    if (-not $resp.ok) { $res.StatusCode = 400 }
+                }
+            }
+            $jb = [System.Text.Encoding]::UTF8.GetBytes(($resp | ConvertTo-Json -Depth 6))
+            $res.ContentType = 'application/json; charset=utf-8'
+            $res.ContentLength64 = $jb.Length
+            $res.OutputStream.Write($jb, 0, $jb.Length)
+            $res.Close()
+            continue
+        }
+
         $obj = $null
         switch ($rota) {
             '/saude'   { $obj = Get-Saude }
@@ -660,7 +738,7 @@ while ($listener.IsListening) {
             '/ping'    { $obj = [pscustomobject]@{ ok = $true; servico = 'arandu-saude'; porta = $PORTA } }
             default    {
                 $res.StatusCode = 404
-                $obj = [pscustomobject]@{ erro = 'rota desconhecida'; rotas = @('/saude','/limpeza','/modelos','/modelo','/agenda','/email','/falar','/ocr','/memoria','/memoria/item','/memoria/perfil','/memoria/remover','/ping') }
+                $obj = [pscustomobject]@{ erro = 'rota desconhecida'; rotas = @('/saude','/limpeza','/modelos','/modelo','/agenda','/agenda/criar','/email','/email/rascunho','/falar','/ocr','/memoria','/memoria/item','/memoria/perfil','/memoria/remover','/ping') }
             }
         }
 
