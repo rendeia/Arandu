@@ -131,10 +131,11 @@
   .field{margin-bottom:18px}
   .field label{display:block;font-weight:600;font-size:14px;margin-bottom:6px}
   .field .desc{font-size:12px;color:var(--muted);margin-top:5px}
-  .field textarea,.field input[type=text],.field input[type=number]{
+  .field textarea,.field input[type=text],.field input[type=number],.field input[type=datetime-local]{
     width:100%;padding:10px 12px;background:var(--panel2);border:1px solid var(--border);
     border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;
   }
+  .field input[type=datetime-local]::-webkit-calendar-picker-indicator{filter:invert(.7)}
   .field textarea{min-height:90px;resize:vertical;line-height:1.4}
   .range-row{display:flex;align-items:center;gap:12px}
   .range-row input[type=range]{flex:1;accent-color:var(--accent)}
@@ -1199,6 +1200,9 @@ function esconderTrocaModelo(){ const el=document.getElementById('trocaModelo');
 // de confirmacao; so no clique o ajudante 8099 executa. E-mail = rascunho (nao envia).
 let ACAO_TIPO="evento";
 function escAttr(s){ return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+// Normaliza data/hora para o formato do <input type=datetime-local> (AAAA-MM-DDTHH:MM),
+// aceitando o que o modelo mandar ("2026-07-10 15:00", com T, ou com segundos). Vazio se não casar.
+function toLocalDT(v){ const m=String(v==null?"":v).trim().match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/); return m?(m[1]+"-"+m[2]+"-"+m[3]+"T"+m[4]+":"+m[5]):""; }
 function toggleAcaoMenu(){ const m=document.getElementById('acaoMenu'); if(m) m.hidden=!m.hidden; }
 document.addEventListener('click',e=>{ const p=document.getElementById('acaoPicker'); if(p&&!p.contains(e.target)){ const m=document.getElementById('acaoMenu'); if(m) m.hidden=true; } });
 function abrirAcaoEl(btn){ try{ const o=JSON.parse(btn.getAttribute('data-acao')); abrirAcao(o.t,o.d||{}); }catch(e){} }
@@ -1213,8 +1217,8 @@ function abrirAcao(tipo,dados){
     document.getElementById('acaoTitulo').textContent="📅 Criar evento no calendário";
     box.innerHTML=
       '<div class="field"><label>Assunto</label><input type="text" id="ac-assunto" value="'+g(dados.assunto)+'"></div>'+
-      '<div class="field"><label>Início</label><input type="text" id="ac-inicio" placeholder="2026-07-10 15:00" value="'+g(dados.inicio)+'"></div>'+
-      '<div class="field"><label>Fim</label><input type="text" id="ac-fim" placeholder="2026-07-10 16:00" value="'+g(dados.fim)+'"></div>'+
+      '<div class="field"><label>Início</label><input type="datetime-local" id="ac-inicio" value="'+toLocalDT(dados.inicio)+'"></div>'+
+      '<div class="field"><label>Fim</label><input type="datetime-local" id="ac-fim" value="'+toLocalDT(dados.fim)+'"></div>'+
       '<div class="field"><label>Local</label><input type="text" id="ac-local" value="'+g(dados.local)+'"></div>';
   } else {
     document.getElementById('acaoTitulo').textContent="✉️ Rascunhar e-mail (rascunho — não envia)";
