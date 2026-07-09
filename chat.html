@@ -151,6 +151,8 @@
   .acao-chip>span{font-size:13px;color:var(--text);font-weight:600}
   .acao-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
   .acao-res{font-size:13px;color:var(--muted);min-height:18px;margin-top:8px}
+  .acao-nota{font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;margin-top:4px;line-height:1.5}
+  .acao-nota b{color:var(--text)}
   .btn:hover{filter:brightness(1.1)}
   .blink{animation:blink 1s steps(2) infinite}
   @keyframes blink{0%{opacity:1}50%{opacity:0}}
@@ -277,6 +279,7 @@
       </div>
       <div class="modal-body">
         <div id="acaoCampos"></div>
+        <div class="acao-nota" id="acaoNota"></div>
         <div class="acao-res" id="acaoRes"></div>
         <div class="acao-foot">
           <button class="btn" onclick="fecharAcao()">Cancelar</button>
@@ -1227,6 +1230,9 @@ function abrirAcao(tipo,dados){
       '<div class="field"><label>Assunto</label><input type="text" id="ac-assunto" value="'+g(dados.assunto)+'"></div>'+
       '<div class="field"><label>Mensagem</label><textarea id="ac-corpo">'+esc(String(dados.corpo||""))+'</textarea></div>';
   }
+  document.getElementById('acaoNota').innerHTML=(ACAO_TIPO==='evento')
+    ? 'Ao confirmar, o evento é criado no seu <b>Calendário do Outlook</b> (com lembrete). Você pode editá-lo ou apagá-lo por lá depois.'
+    : 'Ao confirmar, um <b>rascunho</b> é aberto no Outlook para você revisar. <b>Nada é enviado</b> — o envio só acontece quando você clicar em Enviar.';
   document.getElementById('acaoConfirmar').disabled=false;
   document.getElementById('overlayAcao').style.display='flex';
 }
