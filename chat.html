@@ -115,8 +115,8 @@
   #sendBtn.stop svg{fill:#fff;stroke:none}
   .hint{max-width:760px;margin:7px auto 0;padding:0 24px;font-size:11px;color:var(--muted);text-align:center}
   /* ===== Settings modal ===== */
-  #overlay,#overlayKB,#overlayMem{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
-  #modal,#modalKB,#modalMem{background:var(--panel);border:1px solid var(--border);border-radius:14px;width:560px;max-width:92vw;max-height:88vh;overflow-y:auto}
+  #overlay,#overlayKB,#overlayMem,#overlayAcao{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
+  #modal,#modalKB,#modalMem,#modalAcao{background:var(--panel);border:1px solid var(--border);border-radius:14px;width:560px;max-width:92vw;max-height:88vh;overflow-y:auto}
   .mem-item{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
   .mem-item .mi-id{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--accent);background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:1px 6px;margin-right:6px}
   .mem-item .mi-tit{font-weight:600;font-size:14px}
@@ -146,6 +146,10 @@
   .modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
   .btn{padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);cursor:pointer;font-size:14px}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .acao-chip{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin:8px 0}
+  .acao-chip>span{font-size:13px;color:var(--text);font-weight:600}
+  .acao-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+  .acao-res{font-size:13px;color:var(--muted);min-height:18px;margin-top:8px}
   .btn:hover{filter:brightness(1.1)}
   .blink{animation:blink 1s steps(2) infinite}
   @keyframes blink{0%{opacity:1}50%{opacity:0}}
@@ -248,10 +252,38 @@
           </button>
           <div id="modelMenu" class="model-menu" hidden></div>
         </div>
+        <div id="acaoPicker" class="model-picker" style="margin-left:8px">
+          <button class="model-btn" onclick="toggleAcaoMenu()" title="Ações assistidas (criar evento / rascunhar e-mail)">
+            <svg class="chev" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Ação</span>
+          </button>
+          <div id="acaoMenu" class="model-menu" hidden>
+            <div class="mm-item" onclick="abrirAcao('evento',{})"><span>📅 Criar evento</span></div>
+            <div class="mm-item" onclick="abrirAcao('email',{})"><span>✉️ Rascunhar e-mail</span></div>
+          </div>
+        </div>
       </div>
       <div class="hint">A IA roda localmente no seu dispositivo. As respostas podem conter erros.</div>
     </div>
   </main>
+
+  <!-- ===== Ação (confirmação) modal ===== -->
+  <div id="overlayAcao">
+    <div id="modalAcao">
+      <div class="modal-head">
+        <h2 id="acaoTitulo">Ação</h2>
+        <button class="icon-btn" onclick="fecharAcao()"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="modal-body">
+        <div id="acaoCampos"></div>
+        <div class="acao-res" id="acaoRes"></div>
+        <div class="acao-foot">
+          <button class="btn" onclick="fecharAcao()">Cancelar</button>
+          <button class="btn primary" id="acaoConfirmar" onclick="acaoExecutar()">Confirmar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== Memória modal ===== -->
   <div id="overlayMem">
@@ -330,6 +362,10 @@
         <div class="field check">
           <input type="checkbox" id="cfg-pensador">
           <label for="cfg-pensador">Modo pensador — mostra o raciocínio do Arandu num bloco "💭 Pensamento" colapsável <small style="color:var(--muted)">(deixa as respostas bem mais lentas na CPU)</small></label>
+        </div>
+        <div class="field check">
+          <input type="checkbox" id="cfg-acoes">
+          <label for="cfg-acoes">Ações assistidas — deixa o Arandu <b>propor</b> criar evento / rascunhar e-mail (você confirma num card) <small style="color:var(--muted)">(adiciona instruções ao prompt; o botão "Ação" na barra funciona independente disso)</small></label>
         </div>
         <div class="field">
           <label>Idioma das respostas</label>
@@ -457,6 +493,9 @@ const LS_CFG="iaport_cfg", LS_CONV="iaport_convs";
 // Identidade fixa do Arandu — vai SEMPRE no system, independente da config do usuário,
 // do RAG ou do embedding. "Arandu" é nome próprio do projeto: nenhum modelo sabe o que é
 // sem esta injeção, então sem ela a IA inventa (fruta, app, etc.).
+// Instrução de AÇÕES (injetada no system SÓ quando cfg.acoes está ligado, para não
+// alterar o system em que a 1.2 foi treinada no uso normal).
+const ACOES_INSTR="Ações assistidas: se o usuário pedir claramente para CRIAR um evento na agenda ou RASCUNHAR um e-mail, responda normalmente e, ao FINAL, inclua um bloco ```acao com um JSON. Evento: {\"tipo\":\"evento\",\"assunto\":\"...\",\"inicio\":\"AAAA-MM-DD HH:MM\",\"fim\":\"AAAA-MM-DD HH:MM\",\"local\":\"...\"}. E-mail: {\"tipo\":\"email\",\"para\":\"...\",\"assunto\":\"...\",\"corpo\":\"...\"}. NUNCA invente e-mails, nomes ou datas: se faltar informação, pergunte em vez de preencher. Só inclua o bloco quando o pedido for realmente para criar/agendar/rascunhar; o usuário ainda vai confirmar antes de qualquer coisa acontecer.";
 const IDENTIDADE_ARANDU="Você é o Arandu, modelo de IA da família G1 (Eficiência) da plataforma Rendeia. Funciona 100% local e offline, a partir de um pendrive. A Rendeia NÃO é o ChatGPT, o Gemini, a Llama nem outro serviço em nuvem: é um projeto próprio e independente, executado na CPU pelo motor llamafile, sem acesso à internet. Outras famílias da Rendeia: Katu (G2 - raciocínio), Vera (G3 - multimodal), Taba (G4 - agentes). Ao perguntarem \"o que é o Arandu\", \"o que é a Rendeia\" ou \"quem é você\" (ou equivalente em outro idioma), responda com base nesta identidade.";
 // Idiomas suportados: auto = responde no idioma do usuário (preserva o comportamento padrão).
 // Códigos BCP-47 p/ a voz (Web Speech) e instrução curta p/ o modelo. Custo: ~25 tokens
@@ -476,6 +515,7 @@ const DEFAULTS={
   falar:false, voz:"",
   idioma:"auto",
   pensador:false,   // false = injeta /no_think no Qwen3 (rápido); true = modelo pensa antes (mais lento, mostra <think> num colapsável)
+  acoes:false,      // false = system inalterado (mantém a 1.2 como treinada); true = modelo pode PROPOR ações via bloco ```acao
   ragOn:false, ragTopK:4, embedUrl:"http://127.0.0.1:8091",
   ragStrict:true, ragMinScore:0.40
 };
@@ -573,6 +613,18 @@ function md(src){
   src=src.replace(/\(\s*\)/g,"").replace(/\s+([,.;:!?])/g,"$1").replace(/[ \t]{2,}/g," ");
   src=src.replace(/\r\n/g,"\n");
   const blocks=[];
+  // Bloco de acao (```acao {json}): vira card de confirmacao. Usa uma SENTINELA
+  // robusta (como o @@ARANDUTHINK@@) para sobreviver ao wrap de paragrafo. NAO executa.
+  const acards=[];
+  src=src.replace(/```acao\s*\n?([\s\S]*?)```/gi,(m,corpo)=>{
+    let d; try{ d=JSON.parse(corpo.trim()); }catch(e){ return m; }
+    const t=(d.tipo==='email')?'email':((d.tipo==='evento'||d.tipo==='agenda')?'evento':null);
+    if(!t) return m;
+    const rot=(t==='evento')?'📅 Revisar e criar evento':'✉️ Revisar e rascunhar e-mail';
+    const titulo=esc(String(d.assunto||d.para||(t==='evento'?'Evento':'E-mail')));
+    acards.push('<div class="acao-chip"><span>'+titulo+'</span><button class="btn primary" data-acao="'+escAttr(JSON.stringify({t:t,d:d}))+'" onclick="abrirAcaoEl(this)">'+rot+'</button></div>');
+    return "@@ARANDUACAO"+(acards.length-1)+"END@@";
+  });
   src=src.replace(/```(\w*)\n?([\s\S]*?)```/g,(m,lang,code)=>{
     blocks.push('<pre><code>'+esc(code.replace(/\n$/,''))+'</code></pre>');return "  "+(blocks.length-1)+"  ";
   });
@@ -601,6 +653,7 @@ function md(src){
     return '<details class="pensador"><summary>💭 Pensamento</summary><div>'+esc(p).replace(/\n/g,'<br>')+'</div></details>';
   });
   src=src.replace(/ (\d+) /g,(m,i)=>blocks[+i]);
+  src=src.replace(/@@ARANDUACAO(\d+)END@@/g,(m,i)=>acards[+i]||"");
   return src;
 }
 
@@ -692,7 +745,8 @@ async function stream(c){
   }catch(e){}
   const lang=(IDIOMAS[cfg.idioma]||IDIOMAS.auto);
   const dirIdioma=lang.instr?("\n\n"+lang.instr):"";
-  const baseSys=IDENTIDADE_ARANDU+dirIdioma+"\n\n"+cfg.system+noThink+memStable;
+  const acoesInstr=cfg.acoes?("\n\n"+ACOES_INSTR):"";
+  const baseSys=IDENTIDADE_ARANDU+dirIdioma+"\n\n"+cfg.system+acoesInstr+noThink+memStable;
   let sysContent=baseSys;
   if(cfg.ragOn){
     try{
@@ -808,6 +862,7 @@ function abrirConfig(){
   document.getElementById('cfg-url').value=cfg.url;
   document.getElementById('cfg-enter').checked=cfg.enter;
   document.getElementById('cfg-pensador').checked=!!cfg.pensador;
+  document.getElementById('cfg-acoes').checked=!!cfg.acoes;
   document.getElementById('cfg-idioma').value=cfg.idioma||'auto';
   setRange('temp',cfg.temp);setRange('topp',cfg.topp);setRange('topk',cfg.topk);setRange('minp',cfg.minp);
   setRange('rep',cfg.rep);setRange('freq',cfg.freq);setRange('pres',cfg.pres);setRange('drymult',cfg.drymult);
@@ -823,6 +878,7 @@ function salvarConfig(){
   cfg.url=document.getElementById('cfg-url').value.trim()||DEFAULTS.url;
   cfg.enter=document.getElementById('cfg-enter').checked;
   cfg.pensador=document.getElementById('cfg-pensador').checked;
+  cfg.acoes=document.getElementById('cfg-acoes').checked;
   cfg.idioma=document.getElementById('cfg-idioma').value||'auto';
   cfg.temp=+document.getElementById('cfg-temp').value;
   cfg.topp=+document.getElementById('cfg-topp').value;
@@ -1137,6 +1193,60 @@ function mostrarTrocaModelo(nome){
   el.style.display='flex';
 }
 function esconderTrocaModelo(){ const el=document.getElementById('trocaModelo'); if(el) el.style.display='none'; }
+
+/* ============ Ações assistidas (criar evento / rascunhar e-mail) ============ */
+// Modelo PROPOE (bloco acao) ou usuario abre pelo botao; SEMPRE passa por este card
+// de confirmacao; so no clique o ajudante 8099 executa. E-mail = rascunho (nao envia).
+let ACAO_TIPO="evento";
+function escAttr(s){ return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+function toggleAcaoMenu(){ const m=document.getElementById('acaoMenu'); if(m) m.hidden=!m.hidden; }
+document.addEventListener('click',e=>{ const p=document.getElementById('acaoPicker'); if(p&&!p.contains(e.target)){ const m=document.getElementById('acaoMenu'); if(m) m.hidden=true; } });
+function abrirAcaoEl(btn){ try{ const o=JSON.parse(btn.getAttribute('data-acao')); abrirAcao(o.t,o.d||{}); }catch(e){} }
+function abrirAcao(tipo,dados){
+  const am=document.getElementById('acaoMenu'); if(am) am.hidden=true;
+  ACAO_TIPO=(tipo==='email')?'email':'evento';
+  dados=dados||{};
+  const g=v=>escAttr(v==null?"":v);
+  const box=document.getElementById('acaoCampos');
+  document.getElementById('acaoRes').textContent="";
+  if(ACAO_TIPO==='evento'){
+    document.getElementById('acaoTitulo').textContent="📅 Criar evento no calendário";
+    box.innerHTML=
+      '<div class="field"><label>Assunto</label><input type="text" id="ac-assunto" value="'+g(dados.assunto)+'"></div>'+
+      '<div class="field"><label>Início</label><input type="text" id="ac-inicio" placeholder="2026-07-10 15:00" value="'+g(dados.inicio)+'"></div>'+
+      '<div class="field"><label>Fim</label><input type="text" id="ac-fim" placeholder="2026-07-10 16:00" value="'+g(dados.fim)+'"></div>'+
+      '<div class="field"><label>Local</label><input type="text" id="ac-local" value="'+g(dados.local)+'"></div>';
+  } else {
+    document.getElementById('acaoTitulo').textContent="✉️ Rascunhar e-mail (rascunho — não envia)";
+    box.innerHTML=
+      '<div class="field"><label>Para</label><input type="text" id="ac-para" value="'+g(dados.para)+'"></div>'+
+      '<div class="field"><label>Assunto</label><input type="text" id="ac-assunto" value="'+g(dados.assunto)+'"></div>'+
+      '<div class="field"><label>Mensagem</label><textarea id="ac-corpo">'+esc(String(dados.corpo||""))+'</textarea></div>';
+  }
+  document.getElementById('acaoConfirmar').disabled=false;
+  document.getElementById('overlayAcao').style.display='flex';
+}
+function fecharAcao(){ document.getElementById('overlayAcao').style.display='none'; }
+async function acaoExecutar(){
+  const res=document.getElementById('acaoRes'), btn=document.getElementById('acaoConfirmar');
+  const val=id=>{ const e=document.getElementById(id); return e?e.value.trim():""; };
+  let url,body;
+  if(ACAO_TIPO==='evento'){
+    body={assunto:val('ac-assunto'),inicio:val('ac-inicio'),fim:val('ac-fim'),local:val('ac-local')};
+    if(!body.assunto){ res.textContent="Informe ao menos o assunto do evento."; return; }
+    url="/agenda/criar";
+  } else {
+    body={para:val('ac-para'),assunto:val('ac-assunto'),corpo:val('ac-corpo')};
+    url="/email/rascunho";
+  }
+  btn.disabled=true; res.textContent="Enviando…";
+  try{
+    const r=await fetch(MEM_URL+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json();
+    if(j&&j.ok){ res.textContent="✓ "+(j.aviso||"Feito."); setTimeout(fecharAcao,1800); }
+    else { res.textContent="Não deu: "+((j&&(j.erro||j.dica))||("HTTP "+r.status)); btn.disabled=false; }
+  }catch(e){ res.textContent="Ajudante offline (porta 8099) — não consegui executar. Abra a IA pelo IA_Portatil.vbs."; btn.disabled=false; }
+}
 
 /* ============ Input / atalhos ============ */
 const input=document.getElementById('input');
