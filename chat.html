@@ -734,7 +734,7 @@ async function stream(c){
   // RAG: se ativo, busca trechos relevantes e injeta na mensagem do sistema
   // Qwen3 tem "modo pensamento" que custa velocidade na CPU; desliga com /no_think (so p/ Qwen).
   // /no_think instrui o Qwen3 a NÃO pensar -> rápido na CPU. Modo pensador desliga isso.
-  const noThink=(/qwen3/i.test(modeloArquivo) && !cfg.pensador)?" /no_think":"";
+  const noThink=(/qwen3/i.test(modeloArquivo) && !cfg.pensador && !ehModeloRaciocinio(modeloArquivo))?" /no_think":"";
   const pergunta=c.messages[idx-1]?.content||"";
   // ---- Memória: perfil (essencial) + índice vão SEMPRE; detalhe SOB DEMANDA ----
   let memStable="";
@@ -1081,10 +1081,12 @@ const NOMES_MODELO={
   "Arandu_Nano_1.1_Q4_0.gguf":"Arandu Mirim 1.1 Q4_0",  // mesmo modelo, quant Q4_0 c/ repack AVX (~20%% mais tok/s)
   "arandu-mirim-1.2-Q4_K_M.gguf":"Arandu Mirim 1.2",    // modelo proprio (fine-tune sobre Qwen3-1.7B, 249 ex. pt-BR)
   "arandu-nano-1.0-Q4_K_M.gguf":"Arandu Mirim 1.0",     // modelo proprio (fine-tune sobre Llama-1B)
-  // Katu (G2 - Raciocinio) na plataforma Rendeia, edicao CPU/pendrive: baixe o
-  // .gguf DeepSeek-R1-Distill-Qwen-1.5B (Q4_K_M) e use Usar_Katu_Mirim.bat.
+  // Katu (G2 - Raciocinio), edicao CPU/pendrive: Qwen3-1.7B em modo PENSANTE
+  // (copia do Qwen3 base). Otimo pt-BR + raciocinio via <think>. Usar_Katu_Mirim.bat.
   // (A edicao WebGPU/browser vive em https://github.com/rendeia/Katu como demo.)
-  "DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf":"Katu Mirim 2.1",
+  "Katu-Qwen3-1.7B-Q4_K_M.gguf":"Katu Mirim 2.1",
+  // R1-Distill-1.5B: testado e descartado p/ pt-BR (portugues fraco). Mapa so p/ nao ficar "sem nome":
+  "DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf":"Katu 2.0-R1 (experimental)",
   "Llama-3.2-1B-Instruct-Q4_K_M.gguf":"Llama 1B (base)",
   "Llama-3.2-3B-Instruct-Q4_K_M.gguf":"Llama 3B (base)"
 };
@@ -1125,6 +1127,7 @@ const GRUPOS_MODELO=[
     "arandu-nano-1.0-Q4_K_M.gguf",
   ]},
   {familia:"Katu — raciocínio", arquivos:[
+    "Katu-Qwen3-1.7B-Q4_K_M.gguf",
     "DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf",
   ]},
   {familia:"Base (Llama)", arquivos:[
