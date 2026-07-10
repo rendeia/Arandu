@@ -501,6 +501,9 @@ const LS_CFG="iaport_cfg", LS_CONV="iaport_convs";
 // alterar o system em que a 1.2 foi treinada no uso normal).
 const ACOES_INSTR="Ações assistidas: se o usuário pedir claramente para CRIAR um evento na agenda ou RASCUNHAR um e-mail, responda normalmente e, ao FINAL, inclua um bloco ```acao com um JSON. Evento: {\"tipo\":\"evento\",\"assunto\":\"...\",\"inicio\":\"AAAA-MM-DD HH:MM\",\"fim\":\"AAAA-MM-DD HH:MM\",\"local\":\"...\"}. E-mail: {\"tipo\":\"email\",\"para\":\"...\",\"assunto\":\"...\",\"corpo\":\"...\"}. NUNCA invente e-mails, nomes ou datas: se faltar informação, pergunte em vez de preencher. Só inclua o bloco quando o pedido for realmente para criar/agendar/rascunhar; o usuário ainda vai confirmar antes de qualquer coisa acontecer.";
 const IDENTIDADE_ARANDU="Você é o Arandu, modelo de IA da família G1 (Eficiência) da plataforma Rendeia. Funciona 100% local e offline, a partir de um pendrive. A Rendeia NÃO é o ChatGPT, o Gemini, a Llama nem outro serviço em nuvem: é um projeto próprio e independente, executado na CPU pelo motor llamafile, sem acesso à internet. Outras famílias da Rendeia: Katu (G2 - raciocínio), Vera (G3 - multimodal), Taba (G4 - agentes). Ao perguntarem \"o que é o Arandu\", \"o que é a Rendeia\" ou \"quem é você\" (ou equivalente em outro idioma), responda com base nesta identidade.";
+// System ENXUTO para modelos de raciocinio (Katu): o R1-Distill se confunde com
+// um system grande (comeca a "raciocinar sobre o prompt"). Aqui vai o minimo.
+const KATU_IDENTIDADE="Você é o Katu, o modelo de raciocínio (família G2) da plataforma Rendeia, rodando local e offline. Pense passo a passo antes de responder e escreva em português do Brasil, de forma clara e correta.";
 // Idiomas suportados: auto = responde no idioma do usuário (preserva o comportamento padrão).
 // Códigos BCP-47 p/ a voz (Web Speech) e instrução curta p/ o modelo. Custo: ~25 tokens
 // quando explícito; 0 quando auto. O Qwen3 ja sabe varios idiomas — não pesa em RAM.
@@ -751,7 +754,9 @@ async function stream(c){
   const lang=(IDIOMAS[cfg.idioma]||IDIOMAS.auto);
   const dirIdioma=lang.instr?("\n\n"+lang.instr):"";
   const acoesInstr=cfg.acoes?("\n\n"+ACOES_INSTR):"";
-  const baseSys=IDENTIDADE_ARANDU+dirIdioma+"\n\n"+cfg.system+acoesInstr+noThink+memStable;
+  const baseSys=ehModeloRaciocinio(modeloArquivo)
+    ? (KATU_IDENTIDADE+dirIdioma+memStable)                                  // Katu: system enxuto, deixa pensar
+    : (IDENTIDADE_ARANDU+dirIdioma+"\n\n"+cfg.system+acoesInstr+noThink+memStable);
   let sysContent=baseSys;
   if(cfg.ragOn){
     try{
